@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edv-backend
+    volumes:
+      - .:/app
+      - modeldata:/app/trained_model  # Mount the shared volume for model
+    working_dir: /app
+    ports:
+      - "5000:5000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["python", "app.py"]
+
+volumes:
+  modeldata:
+    external: true  # <-- This tells Docker to use the volume created by the trainer project

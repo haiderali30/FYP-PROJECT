@@ -1,0 +1,462 @@
+# version: "3.8"
+# services:
+#   server:
+#     build:
+#       context: .
+#       dockerfile: server/Dockerfile
+#     container_name: fl-server
+#     ports:
+#       - "8080:8080"
+#     volumes:
+#       - ./datasets:/app/datasets
+
+#   client1:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client1
+#     command: ["python", "client.py", "datasets/House1_data.csv", "client1"]
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./datasets:/app/datasets
+
+#   client2:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client2
+#     command: ["python", "client.py", "datasets/House2_data.csv", "client2"]
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./datasets:/app/datasets
+
+#   client3:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client3
+#     command: ["python", "client.py", "datasets/Hospital_data.csv", "client3"]
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./datasets:/app/datasets
+
+#   client4:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client4
+#     command: ["python", "client.py", "datasets/Industry_data.csv", "client4"]
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./datasets:/app/datasets
+
+#   client5:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client5
+#     command: ["python", "client.py", "datasets/Office_data.csv", "client5"]
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./datasets:/app/datasets
+
+#   client6:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client6
+#     command: ["python", "client.py", "datasets/School_data.csv", "client6"]
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./datasets:/app/datasets
+
+
+
+
+
+
+# version: "3.8"
+# services:
+#   server:
+#     build:
+#       context: .
+#       dockerfile: server/Dockerfile
+#     container_name: fl-server
+#     ports:
+#       - "8080:8080"
+#     volumes:
+#       - ./:/app          # Mount the entire project folder at /app
+#     working_dir: /app     # Set working directory to the project root
+#     environment:
+#       - PYTHONPATH=/app  # Include /app in Python's module search path
+#     command: ["python", "server/server.py"]  # Run server script from the server folder
+
+#   client1:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client1
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./:/app
+#     working_dir: /app
+#     environment:
+#       - PYTHONPATH=/app
+#     command: ["python", "client/client.py", "datasets/House1_data.csv", "client1"]
+
+#   client2:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client2
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./:/app
+#     working_dir: /app
+#     environment:
+#       - PYTHONPATH=/app
+#     command: ["python", "client/client.py", "datasets/House2_data.csv", "client2"]
+
+#   client3:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client3
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./:/app
+#     working_dir: /app
+#     environment:
+#       - PYTHONPATH=/app
+#     command: ["python", "client/client.py", "datasets/Hospital_data.csv", "client3"]
+
+#   client4:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client4
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./:/app
+#     working_dir: /app
+#     environment:
+#       - PYTHONPATH=/app
+#     command: ["python", "client/client.py", "datasets/Industry_data.csv", "client4"]
+
+#   client5:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client5
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./:/app
+#     working_dir: /app
+#     environment:
+#       - PYTHONPATH=/app
+#     command: ["python", "client/client.py", "datasets/Office_data.csv", "client5"]
+
+#   client6:
+#     build:
+#       context: .
+#       dockerfile: client/Dockerfile
+#     container_name: fl-client6
+#     depends_on:
+#       - server
+#     volumes:
+#       - ./:/app
+#     working_dir: /app
+#     environment:
+#       - PYTHONPATH=/app
+#     command: ["python", "client/client.py", "datasets/School_data.csv", "client6"]
+
+
+# C:\MY-FYP-PROJECT\trainer\docker-compose.yaml
+# services:
+#   # -----------------------------
+#   # Zookeeper for Kafka
+#   # -----------------------------
+#   zookeeper:
+#     image: confluentinc/cp-zookeeper:latest
+#     container_name: fl-zookeeper
+#     environment:
+#       ZOOKEEPER_CLIENT_PORT: 2181
+#       ZOOKEEPER_TICK_TIME: 2000
+#     ports:
+#       - "2181:2181"
+
+#   # -----------------------------
+#   # Kafka Broker
+#   # -----------------------------
+#   kafka:
+#     image: confluentinc/cp-kafka:latest
+#     container_name: fl-kafka
+#     depends_on:
+#       - zookeeper
+#     environment:
+#       KAFKA_BROKER_ID: 1
+#       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#     ports:
+#       - "9092:9092"
+
+#   # -----------------------------
+#   # Real‑time Data Producer
+#   # -----------------------------
+#   producer:
+#     image: python:3.11-slim
+#     container_name: fl-producer-rt
+#     volumes:
+#       - ./:/app
+#     working_dir: /app
+#     depends_on:
+#       - kafka
+#     environment:
+#       - PYTHONUNBUFFERED=1
+#     command: >
+#       sh -c "pip install -r requirements-producer.txt &&
+#             python realtime_producer.py"
+
+  # -----------------------------
+  # Flower Server (Model Trainer)
+  # -----------------------------
+  # server:
+  #   build:
+  #     context: .
+  #     dockerfile: server/Dockerfile
+  #   container_name: fl-server-rt
+  #   depends_on:
+  #     - kafka
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./:/app
+  #     - modeldata:/app/trained_model
+  #   working_dir: /app
+  #   environment:
+  #     - PYTHONPATH=/app
+  #   command: ["python", "server/server.py"]
+
+
+  # server:
+  #   build:
+  #     context: .
+  #     dockerfile: server/Dockerfile
+  #   container_name: fl-server-rt
+  #   depends_on:
+  #     - kafka
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - ./:/app
+  #   # Mount your backend's prediction_model_files_docker directly into the server container
+  #     - ../app/backend/prediction_model_files_docker:/app/prediction_model_files_docker
+  #   working_dir: /app
+  #   environment:
+  #     - PYTHONPATH=/app
+  #   command: ["python", "server/server.py"]
+  
+
+
+version: "3.8"
+
+services:
+  # -----------------------------
+  # Zookeeper for Kafka
+  # -----------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: fl-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # -----------------------------
+  # Kafka Broker
+  # -----------------------------
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: fl-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+  # -----------------------------
+  # Real-time Data Producer
+  # -----------------------------
+  producer:
+    image: python:3.11-slim
+    container_name: fl-producer-rt
+    depends_on:
+      - kafka
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: >
+      sh -c "pip install -r requirements-producer.txt &&
+             python realtime_producer.py"
+
+  # -----------------------------
+  # Flower Server (Model Trainer)
+  # -----------------------------
+  server:
+    build:
+      context: .                    # assumes you run from trainer/
+      dockerfile: server/Dockerfile
+    container_name: fl-server-rt
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    volumes:
+      # Your trainer code & FL logic
+      - ./:/app
+      # Bind-mount the backend’s model folder so it’s populated in real time:
+      # host: ../app/backend/prediction_model_files_docker → container: /app/trained_model
+      - ../app/backend/prediction_model_files_docker:/app/trained_model
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - MODEL_DIR=/app/trained_model
+    command: ["python", "server/server.py"]
+
+  # -----------------------------
+  # Flower Clients (Buildings)
+  # -----------------------------
+  client1:
+    build:
+      context: .                      # still the trainer/ directory
+      dockerfile: client/Dockerfile
+    container_name: fl-client1-rt
+    depends_on:
+      - server
+      - kafka
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+    command:
+      - python
+      - client/client.py
+      - /app/datasets/future_House1_data.csv
+      - client1
+
+  client2:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: fl-client2-rt
+    depends_on:
+      - server
+      - kafka
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+    command:
+      - python
+      - client/client.py
+      - /app/datasets/future_House2_data.csv
+      - client2
+
+  client3:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: fl-client3-rt
+    depends_on:
+      - server
+      - kafka
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+    command:
+      - python
+      - client/client.py
+      - /app/datasets/future_Hospital_data.csv
+      - client3
+
+  client4:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: fl-client4-rt
+    depends_on:
+      - server
+      - kafka
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+    command:
+      - python
+      - client/client.py
+      - /app/datasets/future_Industry_data.csv
+      - client4
+
+  client5:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: fl-client5-rt
+    depends_on:
+      - server
+      - kafka
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+    command:
+      - python
+      - client/client.py
+      - /app/datasets/future_Office_data.csv
+      - client5
+
+  client6:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: fl-client6-rt
+    depends_on:
+      - server
+      - kafka
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+    command:
+      - python
+      - client/client.py
+      - /app/datasets/future_School_data.csv
+      - client6
