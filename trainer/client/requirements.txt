@@ -2,6 +2,4 @@ flwr
 tensorflow==2.18.0
 pandas
 scikit-learn
-tabulate
 joblib
-kafka-python

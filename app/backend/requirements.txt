@@ -1,4 +1,7 @@
-Flask
-Flask-CORS
-pandas
+flask
+flask-cors
 numpy
+pandas
+joblib
+scikit-learn
+tensorflow==2.18.0

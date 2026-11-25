@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# trainer/realtime_producer.py
+"""Stream "future" smart-meter readings to Kafka, one row per building every 5 minutes.
+
+Reads datasets/future_<Building>_data.csv and publishes each row as JSON to
+the KAFKA_TOPIC topic, simulating live data arriving from each building.
+"""
 
 import os
 import time
@@ -7,19 +11,17 @@ import json
 import pandas as pd
 from kafka import KafkaProducer
 
-# 1) configure
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "kafka:9092")
 TOPIC = os.getenv("KAFKA_TOPIC", "building-data")
 DATA_DIR = "./datasets"
 SLEEP_SECONDS = 5 * 60  # 5 minutes
 
-# 2) start producer
 producer = KafkaProducer(
     bootstrap_servers=KAFKA_BOOTSTRAP,
     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
 )
 
-# 3) load all the future_* CSVs
+# Load every future_*.csv file, keyed by building name
 building_data = {}
 for fn in os.listdir(DATA_DIR):
     if fn.startswith("future_") and fn.endswith(".csv"):
@@ -29,7 +31,7 @@ for fn in os.listdir(DATA_DIR):
         building = fn.replace("future_", "").replace("_data.csv", "")
         building_data[building] = df.to_dict("records")
 
-# 4) stream one row per building every interval
+# Publish one row per building per interval until all data is sent
 pointers = {b: 0 for b in building_data}
 
 while True:
@@ -38,9 +40,7 @@ while True:
         idx = pointers[bldg]
         if idx < len(records):
             rec = records[idx]
-            # attach building name
             rec["building"] = bldg
-            # send
             producer.send(TOPIC, rec)
             print(f"[{time.strftime('%H:%M:%S')}] → {bldg}  {rec['Time']}")
             pointers[bldg] += 1

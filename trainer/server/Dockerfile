@@ -1,17 +1,14 @@
-# server/Dockerfile
+# Image for the federated learning server (build context: trainer/)
 FROM python:3.11-slim
-
 WORKDIR /app
+ENV PYTHONPATH=/app
 
-# Copy global configuration and model files
-COPY config.py .
-COPY model/ model/
-
-# Copy the server folder contents (server.py and requirements.txt)
 COPY server/requirements.txt .
-COPY server/server.py .
-
-# Install server dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python", "server.py"]
+COPY config.py .
+COPY model/ model/
+COPY server/server.py server/server.py
+
+EXPOSE 8080
+CMD ["python", "server/server.py"]

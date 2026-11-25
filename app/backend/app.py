@@ -1,3 +1,12 @@
+"""Flask API for the energy dashboard.
+
+Endpoints:
+  POST /predict      forecast consumption N hours ahead with the latest
+                     federated global model
+  GET  /consumption  historical consumption for a building and date range
+  GET  /metrics      summary statistics (total, peak, peak hour, average)
+"""
+
 from flask import Flask, request, jsonify
 import numpy as np
 import pandas as pd
@@ -29,45 +38,20 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
-# Global constants (adjust as used during training)
-SEQUENCE_LENGTH = 72  # e.g., past 72 hours
-# File paths for model and scalers – update as needed:
-
-
-# NEW (at module top)
-# MODEL_PATH = "app/backend/prediction_model_files_docker/latest_model.h5"
-# FEATURE_SCALER_PATH = "app/backend/prediction_model_files_docker/feature_scaler.save"
-# TARGET_SCALER_PATH = "app/backend/prediction_model_files_docker/target_scaler.save"
-# HISTORICAL_CSV_PATH = "app/backend/prediction_model_files_docker/community_data.csv"
-
-# ok
-# # Paths into the Docker bind‑mount
-# MODEL_PATH   = "/app/trained_model/latest_model.h5"
-# FEATURE_PATH = "/app/trained_model/feature_scaler.save"
-# TARGET_PATH  = "/app/trained_model/target_scaler.save"
-# HIST_CSV     = "/app/trained_model/community_data.csv"
-
+SEQUENCE_LENGTH = 72  # must match trainer/config.py
 
 # Find the directory this file lives in
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# prediction_model_files_docker sits alongside app.py
+# The federated server writes the latest global model and scalers here
 PREDICTION_DIR = os.path.join(BASE_DIR, "prediction_model_files_docker")
 
 MODEL_PATH          = os.path.join(PREDICTION_DIR, "latest_model.h5")
 FEATURE_SCALER_PATH = os.path.join(PREDICTION_DIR, "feature_scaler.save")
 TARGET_SCALER_PATH  = os.path.join(PREDICTION_DIR, "target_scaler.save")
 HISTORICAL_CSV_PATH = os.path.join(PREDICTION_DIR, "community_data.csv")
+DATASETS_DIR        = os.path.join(BASE_DIR, "datasets")
 
-# MODEL_PATH = "prediction_model_files_docker/Using Federated Learning for Short-term Residential Load Forecasting.h5"
-# FEATURE_SCALER_PATH = "prediction_model_files_docker/Using Federated Learning for Short-term Residential Load Forecasting_feature.save"
-# TARGET_SCALER_PATH = "prediction_model_files_docker/Using Federated Learning for Short-term Residential Load Forecasting_target.save"
-# HISTORICAL_CSV_PATH = "prediction_model_files_docker/community_data.csv"  # CSV containing "Use [kW]" column
-
-# # Load the trained hybrid model and scalers
-# model = load_model(MODEL_PATH)
-# feature_scaler = joblib.load(FEATURE_SCALER_PATH)
-# target_scaler = joblib.load(TARGET_SCALER_PATH)
 
 def get_historical_sequence(csv_path, sequence_length, target_scaler):
     """
@@ -171,7 +155,7 @@ def get_consumption_data():
         normalized_building = building_name_map.get(building, building.replace(" ", ""))
         
         # Read the building-specific dataset
-        file_path = f"datasets/{normalized_building}_data.csv"
+        file_path = os.path.join(DATASETS_DIR, f"{normalized_building}_data.csv")
         app.logger.info(f"Reading data from: {file_path}")
         
         try:
@@ -257,7 +241,7 @@ def get_metrics():
         normalized_building = building_name_map.get(building, building.replace(" ", ""))
         
         # Read the building-specific dataset
-        file_path = f"datasets/{normalized_building}_data.csv"
+        file_path = os.path.join(DATASETS_DIR, f"{normalized_building}_data.csv")
         app.logger.info(f"Reading data from: {file_path}")
         
         try:
@@ -322,7 +306,7 @@ def get_metrics():
         return jsonify(response)
 
     except FileNotFoundError:
-        app.logger.error(f"File not found: datasets/{normalized_building}_data.csv")
+        app.logger.error(f"File not found for building: {normalized_building}")
         return jsonify({"error": f"Data not found for building: {building}"}), 404
     except Exception as e:
         app.logger.error(f"Error processing metrics: {str(e)}")
@@ -330,191 +314,3 @@ def get_metrics():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
-
-
-
-
-# import os
-# import numpy as np
-# import pandas as pd
-# import joblib
-# from flask import Flask, request, jsonify
-# from tensorflow.keras.models import load_model
-# from flask_cors import CORS
-# import logging
-
-# logging.basicConfig(level=logging.INFO)
-# app = Flask(__name__)
-
-# # --- CORS ---
-# CORS(app, resources={r"/*": {"origins": ["http://localhost:3000","http://localhost:5173","http://127.0.0.1:5173"]}})
-
-# # --- Constants ---
-# SEQUENCE_LENGTH     = 72
-# MODEL_DIR           = "trained_model"
-# MODEL_PATH          = os.path.join(MODEL_DIR, "latest_model.h5")
-# FEATURE_SCALER_PATH = os.path.join(MODEL_DIR, "feature_scaler.save")
-# TARGET_SCALER_PATH  = os.path.join(MODEL_DIR, "target_scaler.save")
-# HISTORICAL_CSV_PATH = "datasets/community_data.csv"
-
-# # --- Helpers ---
-# def get_historical_sequence(csv_path, sequence_length, target_scaler):
-#     df = pd.read_csv(csv_path)
-#     if "Use [kW]" not in df.columns:
-#         raise ValueError("CSV must contain 'Use [kW]' column.")
-#     arr = df["Use [kW]"].values
-#     if len(arr) < sequence_length:
-#         raise ValueError(f"Need ≥{sequence_length} rows, got {len(arr)}")
-#     seq = arr[-sequence_length:].reshape(-1,1)
-#     scaled = target_scaler.transform(seq)
-#     return scaled[np.newaxis, ...]  # shape (1, seq_len, 1)
-
-# def iterative_forecast(model, seq, exo, horizon):
-#     current = seq.copy()
-#     for _ in range(horizon):
-#         pred = model.predict([current, exo])
-#         # append & drop
-#         next_step = pred.reshape(1,1,1)
-#         current = np.concatenate([current[:,1:,:], next_step], axis=1)
-#     return pred
-
-# def get_exo_array(inputs: dict):
-#     order = [
-#         "Winter","Spring","Summer","Fall",
-#         "Outdoor Temp (°C)","Humidity (%)","Cloud Cover (%)",
-#         "Occupancy","Special Equipment [kW]","Lighting [kW]","HVAC [kW]"
-#     ]
-#     try:
-#         vals = [inputs[k] for k in order]
-#     except KeyError as e:
-#         raise ValueError(f"Missing feature: {e}")
-#     return np.array(vals).reshape(1,-1)
-
-# # --- Endpoints ---
-# @app.route("/predict", methods=["POST"])
-# def predict():
-#     try:
-#         # reload latest artifacts
-#         model          = load_model(MODEL_PATH)
-#         feature_scaler = joblib.load(FEATURE_SCALER_PATH)
-#         target_scaler  = joblib.load(TARGET_SCALER_PATH)
-
-#         data = request.get_json()
-#         horizon     = int(data["hours_ahead"])
-#         user_inputs = data["user_inputs"]
-
-#         exo = get_exo_array(user_inputs)
-#         exo_scaled = feature_scaler.transform(exo)
-
-#         hist_seq = get_historical_sequence(HISTORICAL_CSV_PATH, SEQUENCE_LENGTH, target_scaler)
-
-#         pred_scaled = iterative_forecast(model, hist_seq, exo_scaled, horizon)
-#         pred        = target_scaler.inverse_transform(pred_scaled).flatten()[0]
-
-#         return jsonify({"predicted_consumption": float(pred)})
-
-#     except Exception as err:
-#         app.logger.error(f"/predict error: {err}")
-#         return jsonify({"error": str(err)}), 400
-
-# @app.route("/consumption", methods=["GET"])
-# def consumption():
-#     building  = request.args.get("building")
-#     sd, ed    = request.args.get("start_date"), request.args.get("end_date")
-#     view_type = request.args.get("view_type", "hourly")
-
-#     if not all([building, sd, ed]):
-#         return jsonify({"error": "Missing parameters"}), 400
-
-#     # map name → filename
-#     name_map = {"House 1": "House1", "House 2": "House2"}
-#     norm = name_map.get(building, building.replace(" ",""))
-#     path = f"datasets/{norm}_data.csv"
-
-#     try:
-#         df = pd.read_csv(path)
-#     except FileNotFoundError:
-#         return jsonify({"error": f"No data for {building}"}), 404
-
-#     # pick time & energy columns
-#     time_cols   = ["Time","timestamp","date","DateTime"]
-#     energy_cols = ["Use [kW]","Energy [kW]","Consumption [kW]","Power [kW]"]
-
-#     tcol = next((c for c in time_cols if c in df), None)
-#     ecol = next((c for c in energy_cols if c in df), None)
-
-#     if not tcol or not ecol:
-#         return jsonify({"error": "Bad data format"}), 500
-
-#     df[tcol] = pd.to_datetime(df[tcol])
-#     mask     = (df[tcol].dt.date >= pd.to_datetime(sd).date()) & (df[tcol].dt.date <= pd.to_datetime(ed).date())
-#     part     = df.loc[mask].copy()
-
-#     if part.empty:
-#         return jsonify({"error": "No data in range"}), 404
-
-#     if view_type == "daily":
-#         part["date"] = part[tcol].dt.date
-#         agg = part.groupby("date", as_index=False)[ecol].mean()
-#         agg[tcol] = pd.to_datetime(agg["date"])
-#     else:
-#         agg = part
-
-#     result = agg.apply(lambda r: {
-#         "timestamp": r[tcol].isoformat(),
-#         "consumption": float(r[ecol])
-#     }, axis=1).tolist()
-
-#     return jsonify(result)
-
-# @app.route("/metrics", methods=["GET"])
-# def metrics():
-#     # same building/date logic as /consumption...
-#     building  = request.args.get("building")
-#     sd, ed    = request.args.get("start_date"), request.args.get("end_date")
-
-#     if not all([building, sd, ed]):
-#         return jsonify({"error": "Missing parameters"}), 400
-
-#     name_map = {"House 1": "House1", "House 2": "House2"}
-#     norm     = name_map.get(building, building.replace(" ",""))
-#     path     = f"datasets/{norm}_data.csv"
-
-#     try:
-#         df = pd.read_csv(path)
-#     except FileNotFoundError:
-#         return jsonify({"error": f"No data for {building}"}), 404
-
-#     time_cols   = ["Time","timestamp","date","DateTime"]
-#     energy_cols = ["Use [kW]","Energy [kW]","Consumption [kW]","Power [kW]"]
-#     tcol = next((c for c in time_cols if c in df), None)
-#     ecol = next((c for c in energy_cols if c in df), None)
-#     if not tcol or not ecol:
-#         return jsonify({"error": "Bad data format"}), 500
-
-#     df[tcol] = pd.to_datetime(df[tcol])
-#     mask     = (df[tcol].dt.date >= pd.to_datetime(sd).date()) & (df[tcol].dt.date <= pd.to_datetime(ed).date())
-#     part     = df.loc[mask].copy()
-#     if part.empty:
-#         return jsonify({"error": "No data in range"}), 404
-
-#     total  = float(part[ecol].sum())
-#     peak   = float(part[ecol].max())
-#     part["hour"] = part[tcol].dt.hour
-#     peak_h = part.groupby("hour")[ecol].mean().idxmax()
-#     peak_str = f"{peak_h:02d}:00–{peak_h+1:02d}:00"
-#     avg    = float(part[ecol].mean())
-
-#     return jsonify({
-#         "total_consumption": total,
-#         "peak_demand": peak,
-#         "peak_hour": peak_str,
-#         "average_consumption": avg
-#     })
-
-# @app.route("/")
-# def home():
-#     return "Energy Consumption Prediction API is running!"
-
-# if __name__ == "__main__":
-#     app.run(host="0.0.0.0", port=5000, debug=True)

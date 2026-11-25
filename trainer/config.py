@@ -1,23 +1,23 @@
-# # config.py
-# SEQUENCE_LENGTH = 72
-# EPOCHS = 3
-# BATCH_SIZE = 32
-# MODEL_TYPE = "Hybrid"
-# NUM_CLIENTS = 6
-# SERVER_ADDRESS = "server:8080"  # Use the service name from docker-compose.yaml
-# LEARNING_RATE = 0.001
-# NUM_ROUNDS = 2
-# config.py
-SEQUENCE_LENGTH   = 72
-EPOCHS            = 3
-BATCH_SIZE        = 32
-MODEL_TYPE        = "Hybrid"
-NUM_CLIENTS       = 6
-SERVER_ADDRESS    = "server:8080"
-LEARNING_RATE     = 0.001
+"""Shared configuration for the federated learning server and clients."""
 
-# “How many federated rounds per 5-min slice”
-ROUNDS_PER_SLICE  = 2
-# Federated rounds per 5-min slice\ROUNDS_PER_SLICE = 2
-# If each future_*.csv has N rows, total = 2 * N
-NUM_ROUNDS        = ROUNDS_PER_SLICE * 10
+# Length of the consumption history window (hours) fed to the LSTM branch.
+SEQUENCE_LENGTH = 72
+
+# Local training settings used by every client in each round.
+EPOCHS = 3
+BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+
+# Model architecture: "Hybrid" (LSTM + exogenous features), "LSTM",
+# "Transformer", "MLP", or "XGBoost". See model/model.py.
+MODEL_TYPE = "Hybrid"
+
+# Federation settings.
+NUM_CLIENTS = 6                 # one client per building
+SERVER_ADDRESS = "server:8080"  # docker-compose service name of the server
+
+# Streaming simulation: each new 5-minute data slice is used for
+# ROUNDS_PER_SLICE federated rounds before the clients move to the next slice.
+ROUNDS_PER_SLICE = 2
+NUM_SLICES = 10
+NUM_ROUNDS = ROUNDS_PER_SLICE * NUM_SLICES
